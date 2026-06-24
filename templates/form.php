@@ -16,14 +16,37 @@ $render_field = static function ( array $field ): void {
             <?php echo esc_html( $field['label'] ); ?><?php if ( $required ) : ?><span aria-hidden="true"> *</span><?php endif; ?>
         </label>
 
-        <?php if ( in_array( $type, array( 'text', 'email', 'date' ), true ) ) : ?>
+        <?php if ( 'date' === $type ) : ?>
+            <div class="ucu-date-row">
+                <select class="ucu-date-part" id="<?php echo esc_attr( $id ); ?>-day" name="<?php echo esc_attr( $key ); ?>_day" data-date-part="day" data-date-target="<?php echo esc_attr( $key ); ?>">
+                    <option value="">День</option>
+                    <?php for ($d=1;$d<=31;$d++) echo '<option value="'.str_pad($d,2,'0',STR_PAD_LEFT).'">'.str_pad($d,2,'0',STR_PAD_LEFT).'</option>'; ?>
+                </select>
+                <select class="ucu-date-part" id="<?php echo esc_attr( $id ); ?>-month" name="<?php echo esc_attr( $key ); ?>_month" data-date-part="month" data-date-target="<?php echo esc_attr( $key ); ?>">
+                    <option value="">Місяць</option>
+                    <?php $months=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень']; foreach($months as $i=>$m) echo '<option value="'.str_pad($i+1,2,'0',STR_PAD_LEFT).'">'.$m.'</option>'; ?>
+                </select>
+                <select class="ucu-date-part" id="<?php echo esc_attr( $id ); ?>-year" name="<?php echo esc_attr( $key ); ?>_year" data-date-part="year" data-date-target="<?php echo esc_attr( $key ); ?>">
+                    <option value="">Рік</option>
+                    <?php for ($y=date('Y')-16;$y>=1970;$y--) echo '<option value="'.$y.'">'.$y.'</option>'; ?>
+                </select>
+            </div>
+            <input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $key ); ?>" <?php echo $required ? 'required' : ''; ?> data-date-hidden>
+        <?php elseif ( in_array( $type, array( 'text', 'email' ), true ) ) : ?>
             <input id="<?php echo esc_attr( $id ); ?>" type="<?php echo esc_attr( $type ); ?>" name="<?php echo esc_attr( $key ); ?>" <?php echo $required ? 'required' : ''; ?>>
         <?php elseif ( 'phone' === $type ) : ?>
             <input id="<?php echo esc_attr( $id ); ?>" type="tel" name="<?php echo esc_attr( $key ); ?>" autocomplete="tel" <?php echo $required ? 'required' : ''; ?>>
         <?php elseif ( 'textarea' === $type ) : ?>
             <textarea id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $key ); ?>" rows="4" <?php echo $required ? 'required' : ''; ?>></textarea>
         <?php elseif ( 'attachment' === $type ) : ?>
-            <input id="<?php echo esc_attr( $id ); ?>" type="file" name="<?php echo esc_attr( $key ); ?>" accept="image/jpeg,image/png,image/webp" <?php echo $required ? 'required' : ''; ?>>
+            <div class="ucu-file-wrap">
+                <label class="ucu-file-btn" for="<?php echo esc_attr( $id ); ?>">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 10l-4-4-4 4M12 6v10"/></svg>
+                    Обрати файл
+                </label>
+                <span class="ucu-file-name" id="<?php echo esc_attr( $id ); ?>-name">Файл не обрано</span>
+                <input id="<?php echo esc_attr( $id ); ?>" type="file" name="<?php echo esc_attr( $key ); ?>" accept="image/jpeg,image/png,image/webp" <?php echo $required ? 'required' : ''; ?> style="display:none;" data-file-input>
+            </div>
             <span class="ucu-field__hint">JPG, PNG або WebP до <?php echo esc_html( (string) ( $field['max_size_mb'] ?? 5 ) ); ?> MB.</span>
         <?php elseif ( 'select' === $type ) : ?>
             <select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $key ); ?>" <?php echo $required ? 'required' : ''; ?>>

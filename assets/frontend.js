@@ -145,4 +145,28 @@
             });
         });
     });
+
+    // ── Date picker: три селекти → hidden input ──────────────────────────
+    $(document).on('change', '[data-date-part]', function () {
+        var target = $(this).data('date-target');
+        var $wrap  = $(this).closest('[data-field-key]');
+        var day    = $wrap.find('[data-date-part="day"]').val();
+        var month  = $wrap.find('[data-date-part="month"]').val();
+        var year   = $wrap.find('[data-date-part="year"]').val();
+        if (day && month && year) {
+            $wrap.find('[data-date-hidden]').val(year + '-' + month + '-' + day);
+            $wrap.find('.ucu-date-part').removeClass('ucu-invalid');
+            $wrap.find('[data-field-error]').text('');
+        } else {
+            $wrap.find('[data-date-hidden]').val('');
+        }
+    });
+
+    // ── Файл: показуємо назву ────────────────────────────────────────────
+    $(document).on('change', '[data-file-input]', function () {
+        var name   = this.files && this.files[0] ? this.files[0].name : 'Файл не обрано';
+        var hasFile = !!(this.files && this.files[0]);
+        $('#' + this.id + '-name').text(name).toggleClass('ucu-has-file', hasFile);
+    });
+
 })(jQuery);
