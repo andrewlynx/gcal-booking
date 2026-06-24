@@ -7,6 +7,10 @@ class UCU_Collegium_Form_Validator {
     public static function sanitize_form_data( array $raw ): array {
         $data = array();
         foreach ( UCU_Collegium_Form_Fields::get_fields() as $field ) {
+            if ( 'attachment' === $field['type'] ) {
+                continue;
+            }
+
             $key   = $field['key'];
             $value = $raw[ $key ] ?? '';
 
@@ -31,6 +35,10 @@ class UCU_Collegium_Form_Validator {
         $errors = array();
 
         foreach ( UCU_Collegium_Form_Fields::active_fields( $data ) as $field ) {
+            if ( 'attachment' === $field['type'] ) {
+                continue;
+            }
+
             $key   = $field['key'];
             $value = $data[ $key ] ?? '';
 
@@ -45,7 +53,9 @@ class UCU_Collegium_Form_Validator {
 
             if ( ! empty( $field['options'] ) && ! self::is_empty( $value ) ) {
                 $allowed = array_keys( $field['options'] );
-                if ( ! in_array( (string) $value, array_map( 'strval', $allowed ), true ) ) {
+                $submitted = is_array( $value ) ? $value : array( $value );
+                $invalid   = array_diff( array_map( 'strval', $submitted ), array_map( 'strval', $allowed ) );
+                if ( ! empty( $invalid ) ) {
                     $errors[ $key ] = 'Некоректне значення.';
                 }
             }

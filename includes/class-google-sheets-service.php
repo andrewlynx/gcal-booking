@@ -71,7 +71,10 @@ class UCU_Collegium_Google_Sheets_Service {
             $booking['photo_attachment_id'] ? wp_get_attachment_url( (int) $booking['photo_attachment_id'] ) : '',
         );
         foreach ( UCU_Collegium_Form_Fields::get_fields() as $field ) {
-            $row[] = $form[ $field['key'] ] ?? '';
+            if ( 'attachment' === $field['type'] ) {
+                continue;
+            }
+            $row[] = UCU_Collegium_Form_Fields::format_value( $field, $form[ $field['key'] ] ?? '' );
         }
         array_push( $row, $booking['auto_score'], $booking['manual_score'], $booking['interview_score'], $booking['total_score'], $booking['created_at'], $booking['updated_at'] );
         return $row;

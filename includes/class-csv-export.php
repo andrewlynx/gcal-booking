@@ -20,6 +20,9 @@ class UCU_Collegium_CSV_Export {
         fprintf( $out, chr( 0xEF ) . chr( 0xBB ) . chr( 0xBF ) );
         $header = array( 'booking_id', 'status', 'created_at', 'email', 'phone', 'last_name', 'first_name', 'middle_name', 'slot_date', 'slot_start_time', 'slot_end_time', 'meet_link', 'auto_score', 'manual_score', 'interview_score', 'total_score' );
         foreach ( $fields as $field ) {
+            if ( 'attachment' === $field['type'] ) {
+                continue;
+            }
             $header[] = $field['key'];
         }
         $header[] = 'photo_url';
@@ -29,7 +32,10 @@ class UCU_Collegium_CSV_Export {
             $form = json_decode( $row['form_data'], true ) ?: array();
             $line = array( $row['id'], $row['status'], $row['created_at'], $row['email'], $row['phone'], $row['last_name'], $row['first_name'], $row['middle_name'], $row['slot_date'], $row['start_time'], $row['end_time'], $row['meet_link'], $row['auto_score'], $row['manual_score'], $row['interview_score'], $row['total_score'] );
             foreach ( $fields as $field ) {
-                $line[] = $form[ $field['key'] ] ?? '';
+                if ( 'attachment' === $field['type'] ) {
+                    continue;
+                }
+                $line[] = UCU_Collegium_Form_Fields::format_value( $field, $form[ $field['key'] ] ?? '' );
             }
             $line[] = $row['photo_attachment_id'] ? wp_get_attachment_url( (int) $row['photo_attachment_id'] ) : '';
             fputcsv( $out, $line );

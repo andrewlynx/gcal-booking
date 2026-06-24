@@ -23,7 +23,7 @@ class UCU_Collegium_Booking_Service {
             return array( 'ok' => false, 'message' => 'Перевірте заповнення форми.', 'errors' => $errors );
         }
 
-        $photo_id = $this->handle_photo_upload( $files['photo'] ?? null );
+        $photo_id = $this->handle_photo_upload( $files );
         if ( is_wp_error( $photo_id ) ) {
             return array( 'ok' => false, 'message' => $photo_id->get_error_message(), 'errors' => array( 'photo' => $photo_id->get_error_message() ) );
         }
@@ -235,9 +235,24 @@ class UCU_Collegium_Booking_Service {
         );
     }
 
-    private function handle_photo_upload( $file ) {
+    private function handle_photo_upload( array $files ) {
+        $attachment_fields = array_filter(
+            UCU_Collegium_Form_Fields::get_fields(),
+            static function ( $field ) {
+                return 'attachment' === $field['type'];
+            }
+        );
+
+        $field = reset( $attachment_fields );
+        $key   = $field['key'] ?? 'photo';
+        $upload_key = $key;
+        $file       = $this->get_uploaded_file_from_request( $files, $key, $upload_key );
+
         if ( empty( $file ) || empty( $file['name'] ) ) {
             return new WP_Error( 'photo_required', 'Фото є обов’язковим.' );
+        }
+        if ( isset( $file['error'] ) && UPLOAD_ERR_OK !== (int) $file['error'] ) {
+            return new WP_Error( 'photo_upload_error', $this->upload_error_message( (int) $file['error'] ) );
         }
         if ( (int) $file['size'] > 5 * MB_IN_BYTES ) {
             return new WP_Error( 'photo_size', 'Максимальний розмір фото — 5 MB.' );
@@ -250,7 +265,48 @@ class UCU_Collegium_Booking_Service {
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/media.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
-        $attachment_id = media_handle_upload( 'photo', 0 );
+        $attachment_id = media_handle_upload( $upload_key, 0 );
         return is_wp_error( $attachment_id ) ? $attachment_id : (int) $attachment_id;
+    }
+
+    private function get_uploaded_file_from_request( array $files, string $key, string &$upload_key ): ?array {
+        if ( isset( $files[ $key ] ) && is_array( $files[ $key ] ) ) {
+            $upload_key = $key;
+            return $files[ $key ];
+        }
+
+        if ( 'photo' !== $key && isset( $files['photo'] ) && is_array( $files['photo'] ) ) {
+            $upload_key = 'photo';
+            return $files['photo'];
+        }
+
+        foreach ( $files as $candidate_key => $file ) {
+            if ( is_array( $file ) && ! empty( $file['name'] ) && isset( $file['tmp_name'] ) ) {
+                $upload_key = (string) $candidate_key;
+                return $file;
+            }
+        }
+
+        return null;
+    }
+
+    private function upload_error_message( int $error_code ): string {
+        switch ( $error_code ) {
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                return 'Файл фото завеликий для налаштувань сервера.';
+            case UPLOAD_ERR_PARTIAL:
+                return 'Фото було завантажено лише частково. Спробуйте ще раз.';
+            case UPLOAD_ERR_NO_FILE:
+                return 'Фото є обов’язковим.';
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return 'На сервері не налаштована тимчасова папка для upload.';
+            case UPLOAD_ERR_CANT_WRITE:
+                return 'Сервер не зміг записати файл фото.';
+            case UPLOAD_ERR_EXTENSION:
+                return 'Завантаження фото зупинено PHP-розширенням.';
+            default:
+                return 'Не вдалося завантажити фото. Код помилки: ' . $error_code;
+        }
     }
 }

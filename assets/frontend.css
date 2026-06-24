@@ -22,6 +22,28 @@
     gap: 18px;
 }
 
+.ucu-booking__block {
+    padding: 22px 0;
+    border-top: 1px solid #d8dee8;
+}
+
+.ucu-booking__block:first-of-type {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.ucu-booking__block-title {
+    margin: 0 0 14px;
+    font-size: 19px;
+    line-height: 1.3;
+    letter-spacing: 0;
+}
+
+.ucu-booking__block-description {
+    margin: -6px 0 16px;
+    color: #526071;
+}
+
 .ucu-field {
     display: flex;
     flex-direction: column;
@@ -30,7 +52,9 @@
 }
 
 .ucu-field--textarea,
-.ucu-field--radio {
+.ucu-field--radio,
+.ucu-field--checkbox,
+.ucu-field--attachment {
     grid-column: 1 / -1;
 }
 
@@ -72,7 +96,7 @@
 
 .ucu-field__choices {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 10px;
 }
 
@@ -85,6 +109,12 @@
     border: 1px solid #cbd3df;
     border-radius: 6px;
     background: #fbfcfe;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.ucu-choice input {
+    flex: 0 0 auto;
 }
 
 .ucu-field__hint,

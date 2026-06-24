@@ -3,6 +3,12 @@
 
     function conditionMatches(condition, value) {
         var expected = condition.value;
+        if (Array.isArray(value)) {
+            if (condition.operator === '!=') return value.indexOf(String(expected)) === -1;
+            if (condition.operator === 'in') return Array.isArray(expected) && expected.some(function (item) { return value.indexOf(String(item)) !== -1; });
+            if (condition.operator === 'not_in') return Array.isArray(expected) && expected.every(function (item) { return value.indexOf(String(item)) === -1; });
+            return value.indexOf(String(expected)) !== -1;
+        }
         if (condition.operator === '!=') return String(value) !== String(expected);
         if (condition.operator === 'in') return Array.isArray(expected) && expected.indexOf(value) !== -1;
         if (condition.operator === 'not_in') return Array.isArray(expected) && expected.indexOf(value) === -1;
@@ -10,6 +16,10 @@
     }
 
     function fieldValue($form, key) {
+        var $checkboxes = $form.find('[name="' + key + '[]"]:checked');
+        if ($checkboxes.length) {
+            return $checkboxes.map(function () { return String($(this).val()); }).get();
+        }
         var $checked = $form.find('[name="' + key + '"]:checked');
         if ($checked.length) return $checked.val();
         return $form.find('[name="' + key + '"]').val() || '';
@@ -21,7 +31,10 @@
             var condition = $field.data('condition');
             var active = conditionMatches(condition, fieldValue($form, condition.field));
             $field.toggle(active);
-            $field.find('input, select, textarea').prop('disabled', !active).prop('required', active && $field.data('required') === 1);
+            $field.find('input, select, textarea').prop('disabled', !active).prop('required', false);
+            if (active && $field.data('required') === 1) {
+                $field.find('input:not([type="checkbox"]), select, textarea').prop('required', true);
+            }
             if (!active) {
                 $field.find('[data-field-error]').text('');
             }
@@ -97,6 +110,11 @@
 
             var formData = new FormData($form[0]);
             formData.set('nonce', ucuCollegiumBooking.nonce);
+            $form.find('input[type="file"]:not(:disabled)').each(function () {
+                if (this.name && this.files && this.files.length) {
+                    formData.set(this.name, this.files[0]);
+                }
+            });
 
             $.ajax({
                 url: ucuCollegiumBooking.ajaxUrl,
