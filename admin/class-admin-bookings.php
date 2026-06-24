@@ -1,0 +1,65 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class UCU_Collegium_Admin_Bookings {
+    public static function render(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Insufficient permissions.', 'ucu-collegium-booking' ) );
+        }
+        if ( 'view' === sanitize_key( $_GET['action'] ?? '' ) ) {
+            $booking = ( new UCU_Collegium_Booking_Service() )->get_booking( absint( $_GET['booking_id'] ?? 0 ) );
+            $slot = $booking && $booking['slot_id'] ? ( new UCU_Collegium_Slot_Service() )->get_slot( (int) $booking['slot_id'] ) : null;
+            $available_slots = ( new UCU_Collegium_Slot_Service() )->get_available_slots();
+            include UCU_COLLEGIUM_BOOKING_PATH . 'admin/views/booking-view.php';
+            return;
+        }
+
+        global $wpdb;
+        $where = array( '1=1' );
+        $args  = array();
+        $status = sanitize_key( $_GET['status'] ?? '' );
+        $slot_date = sanitize_text_field( wp_unslash( $_GET['slot_date'] ?? '' ) );
+        if ( $status ) {
+            $where[] = 'b.status = %s';
+            $args[] = $status;
+        }
+        if ( $slot_date ) {
+            $where[] = 's.slot_date = %s';
+            $args[] = $slot_date;
+        }
+        $sql = 'SELECT b.*, s.slot_date, s.start_time, s.end_time FROM ' . UCU_Collegium_Activator::bookings_table() . ' b LEFT JOIN ' . UCU_Collegium_Activator::slots_table() . ' s ON b.slot_id = s.id WHERE ' . implode( ' AND ', $where ) . ' ORDER BY b.created_at DESC LIMIT 500';
+        $bookings = $args ? $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ) : $wpdb->get_results( $sql, ARRAY_A );
+        include UCU_COLLEGIUM_BOOKING_PATH . 'admin/views/bookings-list.php';
+    }
+
+    public static function handle_action(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Insufficient permissions.', 'ucu-collegium-booking' ) );
+        }
+        check_admin_referer( 'ucu_collegium_booking_action' );
+        $booking_id = absint( $_POST['booking_id'] ?? $_GET['booking_id'] ?? 0 );
+        $do = sanitize_key( $_POST['do'] ?? $_GET['do'] ?? '' );
+        $service = new UCU_Collegium_Booking_Service();
+
+        if ( 'scores' === $do ) {
+            $service->update_scores( $booking_id, (float) ( $_POST['manual_score'] ?? 0 ), (float) ( $_POST['interview_score'] ?? 0 ) );
+        } elseif ( 'move' === $do ) {
+            $service->move_to_slot( $booking_id, absint( $_POST['new_slot_id'] ?? 0 ) );
+        } elseif ( 'cancel' === $do ) {
+            $service->cancel( $booking_id );
+        } elseif ( 'retry_calendar' === $do ) {
+            $service->run_integrations( $booking_id );
+        } elseif ( 'retry_sheets' === $do ) {
+            ( new UCU_Collegium_Google_Sheets_Service() )->sync_booking( $booking_id );
+        } elseif ( 'resend_user' === $do ) {
+            ( new UCU_Collegium_Mailer_Service() )->send_user_confirmation( $booking_id );
+        } elseif ( 'resend_admin' === $do ) {
+            ( new UCU_Collegium_Mailer_Service() )->send_admin_notification( $booking_id );
+        }
+
+        wp_safe_redirect( admin_url( 'admin.php?page=ucu-collegium-booking-bookings&action=view&booking_id=' . $booking_id . '&updated=1' ) );
+        exit;
+    }
+}
