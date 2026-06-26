@@ -41,6 +41,22 @@ class UCU_Collegium_Form_Fields {
         $expected  = $condition['value'] ?? null;
         $operator  = $condition['operator'] ?? '=';
 
+        if ( is_array( $actual ) ) {
+            $actual = array_map( 'strval', $actual );
+
+            switch ( $operator ) {
+                case '!=':
+                    return ! in_array( (string) $expected, $actual, true );
+                case 'in':
+                    return ! empty( array_intersect( $actual, array_map( 'strval', (array) $expected ) ) );
+                case 'not_in':
+                    return empty( array_intersect( $actual, array_map( 'strval', (array) $expected ) ) );
+                case '=':
+                default:
+                    return in_array( (string) $expected, $actual, true );
+            }
+        }
+
         switch ( $operator ) {
             case '!=':
                 return (string) $actual !== (string) $expected;
@@ -99,7 +115,7 @@ class UCU_Collegium_Form_Fields {
                 'type'          => 'text',
                 'required'      => false,
                 'score_enabled' => true,
-                'default_score' => 1,
+                'default_score' => 0,
                 'options'       => array(),
                 'condition'     => null,
                 'block'         => $block_key,
@@ -115,7 +131,7 @@ class UCU_Collegium_Form_Fields {
                 'type'          => $type,
                 'required'      => $required,
                 'score_enabled' => true,
-                'default_score' => 1,
+                'default_score' => 0,
                 'options'       => $options,
                 'condition'     => $condition,
             ),
@@ -166,7 +182,23 @@ class UCU_Collegium_Form_Fields {
                     self::field( 'birth_date', 'Дата народження', 'date' ),
                     self::field( 'phone', 'Ваш контактний мобільний номер', 'phone' ),
                     self::field( 'photo', 'Додайте Ваше фото, зроблене не раніше, як за 6 місяців до заповнення анкети. (розмір файла до 5 МB)', 'attachment', true, array(), null, array( 'max_size_mb' => 5, 'allowed_types' => array( 'jpg', 'jpeg', 'png', 'webp' ) ) ),
-                    self::field( 'social_profile_url', 'Посилання на Вашу актуальну та відкриту сторінку в соціальних мережах (Facebook, Instagram, TikTok)' ),
+                    self::field(
+                        'social_accounts',
+                        'Чи є у вас акаунт у нижчезазначених соцмережах? Якщо так, вкажіть лінк на акаунт.',
+                        'checkbox',
+                        false,
+                        array(
+                            'instagram' => 'Instagram',
+                            'whatsapp'  => 'WhatsApp',
+                            'telegram'  => 'Telegram',
+                            'tiktok'    => 'TikTok',
+                            'none'      => 'Немає в жодному з зазначених',
+                        )
+                    ),
+                    self::field( 'instagram_url', 'Instagram', 'text', true, array(), self::in( 'social_accounts', array( 'instagram' ) ) ),
+                    self::field( 'whatsapp_url', 'WhatsApp', 'text', true, array(), self::in( 'social_accounts', array( 'whatsapp' ) ) ),
+                    self::field( 'telegram_url', 'Telegram', 'text', true, array(), self::in( 'social_accounts', array( 'telegram' ) ) ),
+                    self::field( 'tiktok_url', 'TikTok', 'text', true, array(), self::in( 'social_accounts', array( 'tiktok' ) ) ),
                 ),
             ),
             array(
@@ -195,7 +227,7 @@ class UCU_Collegium_Form_Fields {
                 'key' => 'residence',
                 'title' => 'Місце проживання',
                 'description' => '',
-                'fields' => array( self::field( 'region', 'Область' ), self::field( 'city', 'Населений пункт' ), self::field( 'actual_address', 'Фактичне місце проживання' ) ),
+                'fields' => array( self::field( 'region', 'Область' ), self::field( 'city', 'Населений пункт' ), self::field( 'actual_address', 'Вулиця, будинок, квартира' ) ),
             ),
             array(
                 'key' => 'family_info',
@@ -218,13 +250,40 @@ class UCU_Collegium_Form_Fields {
                     self::field( 'previous_relationship_experience', 'Оберіть варіант, який найкраще відображає Ваш досвід побудови стосунків за час проживання у Колегіумі.', 'select', true, array( 'good_conflict_resolution' => 'Маю добрий досвід спілкування та конструктивного вирішення конфліктів.', 'asks_curator_for_help' => 'У вирішенні конфліктів завжди звертаюся по допомогу куратора.', 'avoids_conflict_talks' => 'Уникаю розмов стосовно конфліктних ситуацій та приймаю інших такими, якими вони є.', 'defends_position' => 'Відстоюю свою позицію. Не є прихильником миру "про людське око"', 'comfort_people_only' => 'Будую стосунки з людьми, з якими мені комфортно. Люблю, коли все по-моєму.' ), self::yes( 'previous_collegium_participant' ) ),
                     self::field( 'previous_community_contribution', 'Яким був Ваш особистий вклад у розбудову спільнотного життя Колегіуму?', 'textarea', true, array(), self::yes( 'previous_collegium_participant' ) ),
                     self::field( 'student_organizations', 'До яких студентських організацій в УКУ Ви належите?', 'textarea', true, array(), self::yes( 'previous_collegium_participant' ) ),
-                    self::field( 'curators_attitude', 'Команда формаційної програма включає кураторів (виховників), які проживають разом зі студентами на поверхах і дбають про формацію, дотримання правил та добру атмосферу. Як Ви до цього ставитесь?', 'radio', true, array( 'value_care' => 'Ціную, що поруч будуть люди, які дбають про спільний добробут', 'support_good_atmosphere' => 'Робитиму все від мене залежне, аби підтримувати добру атмосферу', 'ok_less_control' => 'Добре, але сподіваюся, що контролю не буде надто багато', 'want_no_mentors' => 'Хочу проживати без наставників' ), self::no( 'previous_collegium_participant' ) ),
-                    self::field( 'religious_staff_interaction', 'Формаційна програма реалізується працівниками, серед яких є духовні особи - священники та сестри-монахині, які проживають в Колегіумі. Якою буде Ваша взаємодія з ними?', 'select', true, array( 'familiar_environment' => 'Це звичне для мене середовище спілкування й співпраці', 'interested_to_meet' => 'Цікаво, ніколи не спілкував(-ла)ся. Хочу познайомитись', 'no_experience_unsure' => 'Не маю досвіду спілкування, тому не знаю, як складеться', 'bad_experience_distance' => 'Маю поганий досвід. У спілкуванні буду тримати помірну дистанцію', 'dont_want_imposed' => 'А без цього ніяк? Не хочу, аби мені щось навʼязували' ), self::no( 'previous_collegium_participant' ) ),
-                    self::field( 'attitude_to_people_with_disabilities', 'Серед учасників формаційної програми є особи з інвалідністю (потреби, які впливають на спільний побут). Як Ви до цього ставитесь?', 'select', true, array( 'same_wing_help' => 'Погоджуюся мешкати з ними на одному крилі та допомагати, коли буде потреба', 'same_room_positive' => 'Позитивно. Погоджуюся разом проживати в кімнаті та спільно вести побут', 'positive_unsure_relationships' => 'Позитивно. Але не знаю, як з ними будувати стосунки', 'no_communication' => 'Не планую спілкуватися з ними', 'belong_to_category' => 'Сам(-а) належу до цієї категорії' ), self::no( 'previous_collegium_participant' ) ),
-                    self::field( 'emmaus_attitude', 'Формаційна програма передбачає спільні заходи з мешканцями дому "Емаус". Що Ви думаєте про це?', 'select', false, array( 'want_to_meet_volunteer' => 'Хочу познайомитись з ними та спробувати бути волонтером', 'volunteering_experience' => 'Маю досвід волонтерства та буду відвідувати їхні заходи', 'positive_no_participation' => 'Позитивно, але долучатись до спільних акцій не буду', 'not_interested' => 'Мене не цікавлять такі спільноти' ), self::no( 'previous_collegium_participant' ) ),
-                    self::field( 'rules_attitude', 'Ваше ставлення до правил та обмежень?', 'radio', true, array( 'rules_with_exceptions' => 'Правила потрібні, але завжди мають бути винятки', 'breaking_is_interesting' => 'Найцікавіше стається тоді, коли їх порушуєш', 'nobody_follows_rules' => 'Правил все одно ніхто не дотримується', 'cant_live_in_frames' => 'Я не можу постійно жити в рамках', 'strict_rules_needed' => 'Це дуже потрібно. Без чіткого виконання правил ніяк' ), self::no( 'previous_collegium_participant' ) ),
-                    self::field( 'cleanliness_attitude', 'Ваше ставлення до порядку та чистоти?', 'select', true, array( 'others_clean_for_me' => 'Зазвичай за мене прибирають інші', 'order_depends_on_mood' => 'Для мене порядок – не найважливіше. Усе залежить від настрою', 'clean_after_self_only' => 'За собою приберу, за іншими - не буду', 'always_keep_clean' => 'Завжди дбаю про чистоту своєї кімнати самостійно', 'order_is_pressure' => 'Порядок тисне на мене, не можу нормально функціонувати' ), self::no( 'previous_collegium_participant' ) ),
-                    self::field( 'new_relationship_readiness', 'Життя в Колегіумі передбачає спілкування та проживання з різними людьми. Оберіть варіант, який найкраще відображає Вашу готовність до побудови нових стосунків.', 'select', false, array( 'easy_conflict_resolution' => 'Легко знаходжу спільну мову з іншими та вмію конструктивно вирішувати конфліктні ситуації', 'friendly_avoid_conflicts' => 'Я дружня людина, стараюся не провокувати на конфлікт та не зважаю на провокації', 'avoid_conflict_talks' => 'Уникаю розмов стосовно конфліктних ситуацій та приймаю інших такими, якими вони є', 'defend_position' => 'Буду відстоювати свою позицію. Не є прихильником миру "про людське око"', 'comfort_people_only' => 'Будую стосунки з людьми, з якими мені комфортно. Люблю, коли все по-моєму' ), self::no( 'previous_collegium_participant' ) ),
+                    self::field( 'curators_attitude', 'Команда формаційної програма включає кураторів (наставників), які проживають разом зі студентами на поверхах і дбають про формацію, дотримання правил та дружню атмосферу. Як Ви до цього ставитесь?', 'radio', true, array(
+                        'value_care' => 'Ціную, що поруч будуть люди, які дбають про спільний добробут та мою формацію, готовий(-а) створювати добру атмосферу та дотримуватись правил',
+                        'support_good_atmosphere' => 'Готовий(-а) до проживання на поверсі з куратором (наставником), проте не розумію, як я до цього ставлюсь, готовий(-а) жити згідно правил',
+                        'ok_less_control' => 'Добре, але сподіваюся, що контролю не буде надто багато, готовий(-а) жити згідно правил',
+                        'want_no_mentors' => 'Негативно ставлюсь до проживання з куратором (наставником) та дотримання правил' ), self::no( 'previous_collegium_participant' ) ),
+                    self::field( 'religious_staff_interaction', 'Формаційна програма реалізується працівниками, серед яких є духовні особи - священники та сестри-монахині, які проживають у Колегіумі. Якою буде Ваша взаємодія з ними?', 'select', true, array(
+                        'familiar_environment' => 'Готовий(а)до взаємодії, оскільки маю досвід спілкування й співпраці',
+                        'interested_to_meet' => 'Готовий(а)до взаємодії, але ніколи не спілкував(-ла)ся',
+                        'no_experience_unsure' => 'Не маю досвіду спілкування, тому не знаю, як усе складеться',
+                        'bad_experience_distance' => 'Маю поганий досвід. У спілкуванні буду тримати помірну дистанцію',
+                        'dont_want_imposed' => 'Не хочу, аби мені щось навʼязували' ), self::no( 'previous_collegium_participant' ) ),
+                    self::field( 'attitude_to_people_with_disabilities', 'Серед учасників Формаційної програми є особи з інвалідністю (потреби, яких впливають на спільний побут). Як Ви до цього ставитесь?', 'select', true, array(
+                        'same_wing_help' => 'Повністю відкритий(-а) до спільного проживання, побуту та взаємної підтримки',
+                        'same_room_positive' => 'Готовий(-а) проживати поруч і допомагати за потреби',
+                        'positive_unsure_relationships' => 'Розумію важливість інклюзивного середовища та готовий(-а) вчитись будувати добрі стосунки',
+                        'no_communication' => 'Не хочу спілкуватися з ними'), self::no( 'previous_collegium_participant' ) ),
+                    self::field( 'emmaus_attitude', 'Формаційна програма передбачає спільні заходи з мешканцями дому "Емаус" (спільнота, в якій проживають особи з ментальною та/або фізичною інвалідністю). Якою буде Ваша взаємодія?', 'select', false, array(
+                        'want_to_meet_volunteer' => 'Хочу познайомитись з ними та спробувати бути волонтером',
+                        'volunteering_experience' => 'Позитивно, буду відвідувати їхні заходи',
+                        'positive_no_participation' => 'Добре, але долучатись до спільних акцій не буду',
+                        'not_interested' => 'Мене не цікавлять такі спільноти' ), self::no( 'previous_collegium_participant' ) ),
+                    self::field( 'rules_attitude', 'Ваше ставлення до правил та обмежень?', 'radio', true, array(
+                        'rules_with_exceptions' => 'Це дуже потрібно. Без чіткого виконання правил ніяк',
+                        'breaking_is_interesting' => 'Правила потрібні, але завжди мають бути винятки',
+                        'nobody_follows_rules' => 'Я не планую постійно жити в рамках'), self::no( 'previous_collegium_participant' ) ),
+                    self::field( 'cleanliness_attitude', 'Ваше ставлення до порядку та чистоти?', 'select', true, array(
+                        'always_cleaning_after_myself' => 'Завжди дбаю про чистоту своєї кімнати самостійно та готовий допомагати іншим',
+                        'clean_after_self_only' => 'За собою приберу, за іншими – не буду',
+                        'negative' => 'Негативно, оскільки порядок тисне на мене і я не можу нормально функціонувати' ), self::no( 'previous_collegium_participant' ) ),
+                    self::field( 'new_relationship_readiness', 'Життя в Колегіумі передбачає спілкування та проживання з різними людьми. Оберіть варіант, який найкраще відображає Вашу готовність до побудови нових стосунків, вирішення конфліктів та вміння творити добру атмосферу навколо себе.', 'select', false, array(
+                        'easy_conflict_resolution' => 'Легко знаходжу спільну мову з іншими та вмію конструктивно вирішувати конфліктні ситуації',
+                        'friendly_avoid_conflicts' => 'Я не люблю конфліктних ситуацій, стараюся не провокувати на конфлікт та не зважаю на провокації',
+                        'avoid_conflict_talks' => 'Уникаю розмов стосовно конфліктних ситуацій та приймаю інших такими, якими вони є',
+                        'defend_position' => 'Буду відстоювати свою позицію. Не прихильник показового примирення.' ), self::no( 'previous_collegium_participant' ) ),
                 ),
             ),
             array(
