@@ -61,6 +61,13 @@ class UCU_Collegium_Form_Validator {
             }
         }
 
+        if ( ! empty( $data['social_accounts'] ) && is_array( $data['social_accounts'] ) ) {
+            $accounts = array_map( 'strval', $data['social_accounts'] );
+            if ( in_array( 'none', $accounts, true ) && count( $accounts ) > 1 ) {
+                $errors['social_accounts'] = 'Оберіть або соцмережі, або варіант "Немає в жодному з зазначених".';
+            }
+        }
+
         return $errors;
     }
 

@@ -41,6 +41,25 @@
         });
     }
 
+    function syncSocialAccountChoices($form, changedInput) {
+        var key = 'social_accounts';
+        var $changed = $(changedInput);
+        var $choices = $form.find('[name="' + key + '[]"]');
+
+        if (!$choices.length || $changed.attr('name') !== key + '[]') {
+            return;
+        }
+
+        if ($changed.val() === 'none' && $changed.prop('checked')) {
+            $choices.not($changed).prop('checked', false);
+            return;
+        }
+
+        if ($changed.val() !== 'none' && $changed.prop('checked')) {
+            $choices.filter('[value="none"]').prop('checked', false);
+        }
+    }
+
     function showMessage($wrap, type, message) {
         $wrap.find('[data-ucu-success],[data-ucu-error]').prop('hidden', true).text('');
         var selector = type === 'success' ? '[data-ucu-success]' : '[data-ucu-error]';
@@ -73,6 +92,7 @@
         loadSlots($wrap);
 
         $form.on('change input', 'input, select, textarea', function () {
+            syncSocialAccountChoices($form, this);
             updateConditional($form);
         });
 

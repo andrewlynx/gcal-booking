@@ -8,8 +8,12 @@ class UCU_Collegium_Form_Fields {
         return apply_filters( 'ucu_collegium_booking_form_fields', self::default_blocks() );
     }
 
-    public static function get_fields(): array {
+    public static function submission_fields(): array {
         return self::flatten_blocks( self::get_blocks() );
+    }
+
+    public static function get_fields(): array {
+        return array_merge( self::submission_fields(), self::legacy_fields() );
     }
 
     public static function fields_by_key(): array {
@@ -23,9 +27,32 @@ class UCU_Collegium_Form_Fields {
     public static function active_fields( array $data ): array {
         return array_values(
             array_filter(
-                self::get_fields(),
+                self::submission_fields(),
                 static function ( $field ) use ( $data ) {
                     return self::is_field_active( $field, $data );
+                }
+            )
+        );
+    }
+
+    public static function display_fields( array $data ): array {
+        return array_values(
+            array_filter(
+                self::get_fields(),
+                static function ( $field ) use ( $data ) {
+                    if ( 'attachment' === $field['type'] ) {
+                        return false;
+                    }
+
+                    if ( ! self::is_field_active( $field, $data ) ) {
+                        return ! self::is_empty_value( $data[ $field['key'] ] ?? '' );
+                    }
+
+                    if ( ! empty( $field['display_if_empty'] ) ) {
+                        return true;
+                    }
+
+                    return ! self::is_empty_value( $data[ $field['key'] ] ?? '' );
                 }
             )
         );
@@ -114,11 +141,13 @@ class UCU_Collegium_Form_Fields {
                 'label'         => '',
                 'type'          => 'text',
                 'required'      => false,
-                'score_enabled' => true,
+                'score_enabled' => false,
                 'default_score' => 0,
+                'score_map'     => array(),
                 'options'       => array(),
                 'condition'     => null,
                 'block'         => $block_key,
+                'display_if_empty' => true,
             )
         );
     }
@@ -130,8 +159,9 @@ class UCU_Collegium_Form_Fields {
                 'label'         => $label,
                 'type'          => $type,
                 'required'      => $required,
-                'score_enabled' => true,
+                'score_enabled' => false,
                 'default_score' => 0,
+                'score_map'     => array(),
                 'options'       => $options,
                 'condition'     => $condition,
             ),
@@ -153,6 +183,27 @@ class UCU_Collegium_Form_Fields {
 
     private static function in( string $field, array $values ): array {
         return array( 'field' => $field, 'operator' => 'in', 'value' => $values );
+    }
+
+    private static function legacy_fields(): array {
+        return array(
+            self::field(
+                'social_profile_url',
+                'Посилання на Вашу актуальну та відкриту сторінку в соціальних мережах (Facebook, Instagram, TikTok)',
+                'text',
+                false,
+                array(),
+                null,
+                array(
+                    'block'            => 'personal_data',
+                    'display_if_empty' => false,
+                )
+            ),
+        );
+    }
+
+    private static function is_empty_value( $value ): bool {
+        return is_array( $value ) ? empty( $value ) : '' === trim( (string) $value );
     }
 
     private static function default_blocks(): array {
@@ -186,7 +237,7 @@ class UCU_Collegium_Form_Fields {
                         'social_accounts',
                         'Чи є у вас акаунт у нижчезазначених соцмережах? Якщо так, вкажіть лінк на акаунт.',
                         'checkbox',
-                        false,
+                        true,
                         array(
                             'instagram' => 'Instagram',
                             'whatsapp'  => 'WhatsApp',
@@ -254,7 +305,15 @@ class UCU_Collegium_Form_Fields {
                         'value_care' => 'Ціную, що поруч будуть люди, які дбають про спільний добробут та мою формацію, готовий(-а) створювати добру атмосферу та дотримуватись правил',
                         'support_good_atmosphere' => 'Готовий(-а) до проживання на поверсі з куратором (наставником), проте не розумію, як я до цього ставлюсь, готовий(-а) жити згідно правил',
                         'ok_less_control' => 'Добре, але сподіваюся, що контролю не буде надто багато, готовий(-а) жити згідно правил',
-                        'want_no_mentors' => 'Негативно ставлюсь до проживання з куратором (наставником) та дотримання правил' ), self::no( 'previous_collegium_participant' ) ),
+                        'want_no_mentors' => 'Негативно ставлюсь до проживання з куратором (наставником) та дотримання правил' ), self::no( 'previous_collegium_participant' ), array(
+                            'score_enabled' => true,
+                            'score_map'     => array(
+                                'value_care'              => 2,
+                                'support_good_atmosphere' => 1,
+                                'ok_less_control'         => 1,
+                                'want_no_mentors'         => 0,
+                            ),
+                        ) ),
                     self::field( 'religious_staff_interaction', 'Формаційна програма реалізується працівниками, серед яких є духовні особи - священники та сестри-монахині, які проживають у Колегіумі. Якою буде Ваша взаємодія з ними?', 'select', true, array(
                         'familiar_environment' => 'Готовий(а)до взаємодії, оскільки маю досвід спілкування й співпраці',
                         'interested_to_meet' => 'Готовий(а)до взаємодії, але ніколи не спілкував(-ла)ся',
@@ -265,7 +324,15 @@ class UCU_Collegium_Form_Fields {
                         'same_wing_help' => 'Повністю відкритий(-а) до спільного проживання, побуту та взаємної підтримки',
                         'same_room_positive' => 'Готовий(-а) проживати поруч і допомагати за потреби',
                         'positive_unsure_relationships' => 'Розумію важливість інклюзивного середовища та готовий(-а) вчитись будувати добрі стосунки',
-                        'no_communication' => 'Не хочу спілкуватися з ними'), self::no( 'previous_collegium_participant' ) ),
+                        'no_communication' => 'Не хочу спілкуватися з ними'), self::no( 'previous_collegium_participant' ), array(
+                            'score_enabled' => true,
+                            'score_map'     => array(
+                                'same_wing_help'                => 2,
+                                'same_room_positive'            => 1,
+                                'positive_unsure_relationships' => 1,
+                                'no_communication'              => 0,
+                            ),
+                        ) ),
                     self::field( 'emmaus_attitude', 'Формаційна програма передбачає спільні заходи з мешканцями дому "Емаус" (спільнота, в якій проживають особи з ментальною та/або фізичною інвалідністю). Якою буде Ваша взаємодія?', 'select', false, array(
                         'want_to_meet_volunteer' => 'Хочу познайомитись з ними та спробувати бути волонтером',
                         'volunteering_experience' => 'Позитивно, буду відвідувати їхні заходи',
@@ -274,11 +341,25 @@ class UCU_Collegium_Form_Fields {
                     self::field( 'rules_attitude', 'Ваше ставлення до правил та обмежень?', 'radio', true, array(
                         'rules_with_exceptions' => 'Це дуже потрібно. Без чіткого виконання правил ніяк',
                         'breaking_is_interesting' => 'Правила потрібні, але завжди мають бути винятки',
-                        'nobody_follows_rules' => 'Я не планую постійно жити в рамках'), self::no( 'previous_collegium_participant' ) ),
+                        'nobody_follows_rules' => 'Я не планую постійно жити в рамках'), self::no( 'previous_collegium_participant' ), array(
+                            'score_enabled' => true,
+                            'score_map'     => array(
+                                'rules_with_exceptions'    => 2,
+                                'breaking_is_interesting'  => 1,
+                                'nobody_follows_rules'     => 0,
+                            ),
+                        ) ),
                     self::field( 'cleanliness_attitude', 'Ваше ставлення до порядку та чистоти?', 'select', true, array(
                         'always_cleaning_after_myself' => 'Завжди дбаю про чистоту своєї кімнати самостійно та готовий допомагати іншим',
                         'clean_after_self_only' => 'За собою приберу, за іншими – не буду',
-                        'negative' => 'Негативно, оскільки порядок тисне на мене і я не можу нормально функціонувати' ), self::no( 'previous_collegium_participant' ) ),
+                        'negative' => 'Негативно, оскільки порядок тисне на мене і я не можу нормально функціонувати' ), self::no( 'previous_collegium_participant' ), array(
+                            'score_enabled' => true,
+                            'score_map'     => array(
+                                'always_cleaning_after_myself' => 2,
+                                'clean_after_self_only'        => 1,
+                                'negative'                     => 0,
+                            ),
+                        ) ),
                     self::field( 'new_relationship_readiness', 'Життя в Колегіумі передбачає спілкування та проживання з різними людьми. Оберіть варіант, який найкраще відображає Вашу готовність до побудови нових стосунків, вирішення конфліктів та вміння творити добру атмосферу навколо себе.', 'select', false, array(
                         'easy_conflict_resolution' => 'Легко знаходжу спільну мову з іншими та вмію конструктивно вирішувати конфліктні ситуації',
                         'friendly_avoid_conflicts' => 'Я не люблю конфліктних ситуацій, стараюся не провокувати на конфлікт та не зважаю на провокації',
