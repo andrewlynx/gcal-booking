@@ -40,7 +40,13 @@ class UCU_Collegium_Form_Fields {
             array_filter(
                 self::get_fields(),
                 static function ( $field ) use ( $data ) {
+                    $has_key = array_key_exists( $field['key'], $data );
+
                     if ( 'attachment' === $field['type'] ) {
+                        return false;
+                    }
+
+                    if ( ! $has_key ) {
                         return false;
                     }
 
@@ -98,16 +104,18 @@ class UCU_Collegium_Form_Fields {
     }
 
     public static function format_value( array $field, $value ): string {
+        $options = array_merge( $field['legacy_options'] ?? array(), $field['options'] ?? array() );
+
         if ( is_array( $value ) ) {
             $labels = array();
             foreach ( $value as $item ) {
-                $labels[] = $field['options'][ $item ] ?? $item;
+                $labels[] = $options[ $item ] ?? $item;
             }
             return implode( ', ', array_map( 'strval', $labels ) );
         }
 
-        if ( isset( $field['options'][ $value ] ) ) {
-            return (string) $field['options'][ $value ];
+        if ( isset( $options[ $value ] ) ) {
+            return (string) $options[ $value ];
         }
 
         return (string) $value;
@@ -145,6 +153,7 @@ class UCU_Collegium_Form_Fields {
                 'default_score' => 0,
                 'score_map'     => array(),
                 'options'       => array(),
+                'legacy_options'=> array(),
                 'condition'     => null,
                 'block'         => $block_key,
                 'display_if_empty' => true,
@@ -163,6 +172,7 @@ class UCU_Collegium_Form_Fields {
                 'default_score' => 0,
                 'score_map'     => array(),
                 'options'       => $options,
+                'legacy_options'=> array(),
                 'condition'     => $condition,
             ),
             $extra
@@ -326,11 +336,15 @@ class UCU_Collegium_Form_Fields {
                         'positive_unsure_relationships' => 'Розумію важливість інклюзивного середовища та готовий(-а) вчитись будувати добрі стосунки',
                         'no_communication' => 'Не хочу спілкуватися з ними'), self::no( 'previous_collegium_participant' ), array(
                             'score_enabled' => true,
+                            'legacy_options' => array(
+                                'belong_to_category' => 'Сам(-а) належу до цієї категорії',
+                            ),
                             'score_map'     => array(
                                 'same_wing_help'                => 2,
                                 'same_room_positive'            => 1,
                                 'positive_unsure_relationships' => 1,
                                 'no_communication'              => 0,
+                                'belong_to_category'            => 0,
                             ),
                         ) ),
                     self::field( 'emmaus_attitude', 'Формаційна програма передбачає спільні заходи з мешканцями дому "Емаус" (спільнота, в якій проживають особи з ментальною та/або фізичною інвалідністю). Якою буде Ваша взаємодія?', 'select', false, array(
@@ -339,25 +353,37 @@ class UCU_Collegium_Form_Fields {
                         'positive_no_participation' => 'Добре, але долучатись до спільних акцій не буду',
                         'not_interested' => 'Мене не цікавлять такі спільноти' ), self::no( 'previous_collegium_participant' ) ),
                     self::field( 'rules_attitude', 'Ваше ставлення до правил та обмежень?', 'radio', true, array(
-                        'rules_with_exceptions' => 'Це дуже потрібно. Без чіткого виконання правил ніяк',
-                        'breaking_is_interesting' => 'Правила потрібні, але завжди мають бути винятки',
-                        'nobody_follows_rules' => 'Я не планую постійно жити в рамках'), self::no( 'previous_collegium_participant' ), array(
+                        'strict_rules_needed' => 'Це дуже потрібно. Без чіткого виконання правил ніяк',
+                        'rules_with_exceptions' => 'Правила потрібні, але завжди мають бути винятки',
+                        'cant_live_in_frames' => 'Я не планую постійно жити в рамках'), self::no( 'previous_collegium_participant' ), array(
                             'score_enabled' => true,
+                            'legacy_options' => array(
+                                'breaking_is_interesting' => 'Найцікавіше стається тоді, коли їх порушуєш',
+                                'nobody_follows_rules'    => 'Правил все одно ніхто не дотримується',
+                            ),
                             'score_map'     => array(
-                                'rules_with_exceptions'    => 2,
-                                'breaking_is_interesting'  => 1,
+                                'strict_rules_needed'      => 2,
+                                'rules_with_exceptions'    => 1,
+                                'cant_live_in_frames'      => 0,
+                                'breaking_is_interesting'  => 0,
                                 'nobody_follows_rules'     => 0,
                             ),
                         ) ),
                     self::field( 'cleanliness_attitude', 'Ваше ставлення до порядку та чистоти?', 'select', true, array(
-                        'always_cleaning_after_myself' => 'Завжди дбаю про чистоту своєї кімнати самостійно та готовий допомагати іншим',
+                        'always_keep_clean' => 'Завжди дбаю про чистоту своєї кімнати самостійно та готовий допомагати іншим',
                         'clean_after_self_only' => 'За собою приберу, за іншими – не буду',
-                        'negative' => 'Негативно, оскільки порядок тисне на мене і я не можу нормально функціонувати' ), self::no( 'previous_collegium_participant' ), array(
+                        'order_is_pressure' => 'Негативно, оскільки порядок тисне на мене і я не можу нормально функціонувати' ), self::no( 'previous_collegium_participant' ), array(
                             'score_enabled' => true,
+                            'legacy_options' => array(
+                                'others_clean_for_me' => 'Зазвичай за мене прибирають інші',
+                                'order_depends_on_mood' => 'Для мене порядок – не найважливіше. Усе залежить від настрою',
+                            ),
                             'score_map'     => array(
-                                'always_cleaning_after_myself' => 2,
-                                'clean_after_self_only'        => 1,
-                                'negative'                     => 0,
+                                'always_keep_clean'   => 2,
+                                'clean_after_self_only' => 1,
+                                'order_is_pressure'   => 0,
+                                'others_clean_for_me' => 0,
+                                'order_depends_on_mood' => 0,
                             ),
                         ) ),
                     self::field( 'new_relationship_readiness', 'Життя в Колегіумі передбачає спілкування та проживання з різними людьми. Оберіть варіант, який найкраще відображає Вашу готовність до побудови нових стосунків, вирішення конфліктів та вміння творити добру атмосферу навколо себе.', 'select', false, array(
