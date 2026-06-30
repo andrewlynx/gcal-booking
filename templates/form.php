@@ -66,7 +66,6 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                         <option value="political_science_epe">Політичні науки «Етика-Політика-Економіка»</option>
                         <option value="sociology">Соціологія</option>
                         <option value="social_work">Соціальна робота</option>
-                        <option value="physical_therapy">Фізична терапія</option>
                         <option value="psychology">Психологія</option>
                         <option value="law">Право</option>
                         <option value="it_analytics">ІТ та аналітика рішень</option>
@@ -196,26 +195,26 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
                 <!-- Соцмережі: чекбокс + поле посилання -->
                 <input type="hidden" name="social_profile_url" id="social_profile_url_hidden">
-                <div class="ucu-field ucu-field--checkbox" data-field-key="social_media">
+                <div class="ucu-field ucu-field--checkbox" data-field-key="social_accounts">
                     <label class="ucu-field__label">Чи є у Вас акаунт у нижчезазначених соцмережах? Якщо так, вкажіть лінк на акаунт.</label>
                     <div class="ucu-field__choices">
-                        <label class="ucu-choice"><input type="checkbox" name="social_media[]" value="Instagram" data-social-toggle="instagram"> <span>Instagram</span></label>
+                        <label class="ucu-choice"><input type="checkbox" name="social_accounts[]" value="instagram" data-social-toggle="instagram"> <span>Instagram</span></label>
                         <div class="ucu-social-input" id="ucu-social-instagram" style="display:none;">
                             <input type="text" name="instagram_url" placeholder="Посилання на Ваш Instagram">
                         </div>
-                        <label class="ucu-choice"><input type="checkbox" name="social_media[]" value="WhatsApp" data-social-toggle="whatsapp"> <span>WhatsApp</span></label>
+                        <label class="ucu-choice"><input type="checkbox" name="social_accounts[]" value="whatsapp" data-social-toggle="whatsapp"> <span>WhatsApp</span></label>
                         <div class="ucu-social-input" id="ucu-social-whatsapp" style="display:none;">
-                            <input type="text" name="whatsapp" placeholder="Номер на який зареєстрований Ваш WhatsApp">
+                            <input type="text" name="whatsapp_url" placeholder="Номер на який зареєстрований Ваш WhatsApp">
                         </div>
-                        <label class="ucu-choice"><input type="checkbox" name="social_media[]" value="Telegram" data-social-toggle="telegram"> <span>Telegram</span></label>
+                        <label class="ucu-choice"><input type="checkbox" name="social_accounts[]" value="telegram" data-social-toggle="telegram"> <span>Telegram</span></label>
                         <div class="ucu-social-input" id="ucu-social-telegram" style="display:none;">
-                            <input type="text" name="telegram" placeholder="Посилання на Ваш Telegram">
+                            <input type="text" name="telegram_url" placeholder="Посилання на Ваш Telegram">
                         </div>
-                        <label class="ucu-choice"><input type="checkbox" name="social_media[]" value="TikTok" data-social-toggle="tiktok"> <span>TikTok</span></label>
+                        <label class="ucu-choice"><input type="checkbox" name="social_accounts[]" value="tiktok" data-social-toggle="tiktok"> <span>TikTok</span></label>
                         <div class="ucu-social-input" id="ucu-social-tiktok" style="display:none;">
                             <input type="text" name="tiktok_url" placeholder="Посилання на Ваш TikTok">
                         </div>
-                        <label class="ucu-choice"><input type="checkbox" name="social_media[]" value="Немає в жодному із зазначених"> <span>Немає в жодному із зазначених</span></label>
+                        <label class="ucu-choice"><input type="checkbox" name="social_accounts[]" value="none"> <span>Немає в жодному із зазначених</span></label>
                     </div>
                 </div>
 
@@ -240,7 +239,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                         <label class="ucu-choice"><input type="checkbox" name="special_category[]" value="idp"> <span>Внутрішньо переміщена особа</span></label>
                         <label class="ucu-choice"><input type="checkbox" name="special_category[]" value="large_family_child"> <span>Дитина з багатодітної сім'ї</span></label>
                         <label class="ucu-choice"><input type="checkbox" name="special_category[]" value="none"> <span>Не належу до жодної</span></label>
-                        <label class="ucu-choice"><input type="checkbox" name="special_category[]" value="Інше" data-social-toggle="category-other"> <span>Інше</span></label>
+                        <label class="ucu-choice"><input type="checkbox" name="special_category[]" value="other" data-social-toggle="category-other"> <span>Інше</span></label>
                         <div class="ucu-social-input" id="ucu-social-category-other" style="display:none;">
                             <input type="text" name="special_category_other" placeholder="Вкажіть категорію">
                         </div>
@@ -503,9 +502,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                     <label class="ucu-field__label">Команда формаційної програма включає кураторів (наставників), які проживають разом зі студентами на поверхах і дбають про формацію, дотримання правил та дружню атмосферу. Як Ви до цього ставитесь? <span class="ucu-req">*</span></label>
                     <div class="ucu-field__choices">
                         <label class="ucu-choice"><input type="radio" name="curators_attitude" value="value_care"> <span>Ціную, що поруч будуть люди, які дбають про спільний добробут та мою формацію готовий(-а) створювати добру атмосферу та дотримуватися правил;</span></label>
-                        <label class="ucu-choice"><input type="radio" name="curators_attitude" value="ok_unsure"> <span>Готовий(-а) до проживання на поверсі з куратором (наставником), проте не розумію, як я до цього ставлюсь, готовий(-а) жити згідно правил;</span></label>
+                        <label class="ucu-choice"><input type="radio" name="curators_attitude" value="support_good_atmosphere"> <span>Готовий(-а) до проживання на поверсі з куратором (наставником), проте не розумію, як я до цього ставлюсь, готовий(-а) жити згідно правил;</span></label>
                         <label class="ucu-choice"><input type="radio" name="curators_attitude" value="ok_less_control"> <span>Добре, але сподіваюся, що контролю не буде надто багато, готовий(-а) жити згідно правил;</span></label>
-                        <label class="ucu-choice"><input type="radio" name="curators_attitude" value="negative"> <span>Негативно ставлюсь до проживання з куратором (наставником) та дотримання правил</span></label>
+                        <label class="ucu-choice"><input type="radio" name="curators_attitude" value="want_no_mentors"> <span>Негативно ставлюсь до проживання з куратором (наставником) та дотримання правил</span></label>
                     </div>
                     <span class="ucu-field__error" data-field-error></span>
                 </div>

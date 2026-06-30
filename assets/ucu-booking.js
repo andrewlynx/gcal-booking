@@ -188,8 +188,8 @@
     function updateSocialProfileUrl() {
         var links = [];
         var instagram = jQuery('input[name="instagram_url"]').val();
-        var whatsapp  = jQuery('input[name="whatsapp"]').val();
-        var telegram  = jQuery('input[name="telegram"]').val();
+        var whatsapp  = jQuery('input[name="whatsapp_url"]').val();
+        var telegram  = jQuery('input[name="telegram_url"]').val();
         var tiktok    = jQuery('input[name="tiktok_url"]').val();
         if (instagram) links.push('Instagram: ' + instagram);
         if (whatsapp)  links.push('WhatsApp: ' + whatsapp);
@@ -197,10 +197,10 @@
         if (tiktok)    links.push('TikTok: ' + tiktok);
         jQuery('#social_profile_url_hidden').val(links.join(', ') || 'Немає');
     }
-    jQuery(document).on('input', 'input[name="instagram_url"], input[name="whatsapp"], input[name="telegram"], input[name="tiktok_url"]', updateSocialProfileUrl);
-    jQuery(document).on('change', 'input[name="social_media[]"]', function() {
+    jQuery(document).on('input', 'input[name="instagram_url"], input[name="whatsapp_url"], input[name="telegram_url"], input[name="tiktok_url"]', updateSocialProfileUrl);
+    jQuery(document).on('change', 'input[name="social_accounts[]"]', function() {
         setTimeout(updateSocialProfileUrl, 100);
-        if (jQuery('input[name="social_media[]"][value="Немає в жодному із зазначених"]').is(':checked')) {
+        if (jQuery('input[name="social_accounts[]"][value="none"]').is(':checked')) {
             jQuery('#social_profile_url_hidden').val('Немає');
         }
     });
