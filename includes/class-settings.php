@@ -29,6 +29,7 @@ class UCU_Collegium_Settings {
             'create_meet'           => '1',
             'event_title_template'  => 'Співбесіда Колегіуму — {full_name}',
             'event_description_template' => "Дата: {date}\nЧас: {time}\nMeet: {meet_link}",
+            'meet_link'             => '',
             'spreadsheet_id'        => '',
             'sheet_name'            => 'Applications',
             'enable_sheets'         => '0',
@@ -67,7 +68,40 @@ class UCU_Collegium_Settings {
                 continue;
             }
             if ( 'credentials_json' === $key ) {
-                $clean[ $key ] = trim( wp_unslash( $input[ $key ] ) );
+                // Зберігаємо JSON як є — без wp_unslash щоб не пошкодити \n в private_key
+                $raw = $input[ $key ];
+                // WordPress автоматично додає слеші (magic quotes) — прибираємо їх правильно
+                // але НЕ чіпаємо \n які є частиною JSON
+                $decoded = json_decode( $raw, true );
+                if ( ! $decoded ) {
+                    // Спроба з wp_unslash якщо прямий decode не вдався
+                    $decoded = json_decode( wp_unslash( $raw ), true );
+                    if ( $decoded ) {
+                        $raw = wp_unslash( $raw );
+                    }
+                }
+                // Нормалізуємо private_key прямо тут при збереженні
+                if ( $decoded && isset( $decoded['private_key'] ) ) {
+                    $key_val = $decoded['private_key'];
+                    // Відновлюємо реальні переноси рядків
+                    $key_val = str_replace( '\n', "
+", $key_val );
+                    if ( substr_count( $key_val, "
+" ) < 3 ) {
+                        if ( preg_match( '/-----BEGIN ([A-Z ]+)-----(.*?)-----END ([A-Z ]+)-----/s', $key_val, $m ) ) {
+                            $body    = preg_replace( '/[^A-Za-z0-9+\/=]/', '', $m[2] );
+                            $body    = chunk_split( $body, 64, "
+" );
+                            $key_val = "-----BEGIN {$m[1]}-----
+" . $body . "-----END {$m[3]}-----
+";
+                        }
+                    }
+                    $decoded['private_key'] = $key_val;
+                    $clean[ $key ] = wp_json_encode( $decoded );
+                } else {
+                    $clean[ $key ] = trim( $raw );
+                }
             } elseif ( 'event_description_template' === $key ) {
                 $clean[ $key ] = sanitize_textarea_field( wp_unslash( $input[ $key ] ) );
             } elseif ( in_array( $key, array( 'create_meet', 'enable_sheets' ), true ) ) {

@@ -10,8 +10,8 @@ class UCU_Collegium_Assets {
     }
 
     public static function maybe_enqueue_frontend(): void {
-        wp_register_style( 'ucu-collegium-booking-frontend', UCU_COLLEGIUM_BOOKING_URL . 'assets/frontend.css', array(), UCU_COLLEGIUM_BOOKING_VERSION );
-        wp_register_script( 'ucu-collegium-booking-frontend', UCU_COLLEGIUM_BOOKING_URL . 'assets/frontend.js', array( 'jquery' ), UCU_COLLEGIUM_BOOKING_VERSION, true );
+        wp_register_style( 'ucu-collegium-booking-frontend', UCU_COLLEGIUM_BOOKING_URL . 'assets/ucu-booking.css', array(), UCU_COLLEGIUM_BOOKING_VERSION );
+        wp_register_script( 'ucu-collegium-booking-frontend', UCU_COLLEGIUM_BOOKING_URL . 'assets/ucu-booking.js', array( 'jquery' ), UCU_COLLEGIUM_BOOKING_VERSION, true );
 
         if ( is_singular() ) {
             $post = get_post();

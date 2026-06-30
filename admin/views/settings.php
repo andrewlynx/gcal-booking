@@ -7,7 +7,7 @@
             <?php
             $fields = array(
                 'calendar_id' => 'Google Calendar ID', 'credentials_path' => 'Шлях до credentials JSON', 'event_title_template' => 'Шаблон назви події',
-                'spreadsheet_id' => 'Google Spreadsheet ID', 'sheet_name' => 'Google Sheet name', 'admin_email' => 'Admin email', 'from_email' => 'From email', 'from_name' => 'From name',
+                'meet_link' => 'Google Meet посилання (фіксоване)', 'spreadsheet_id' => 'Google Spreadsheet ID', 'sheet_name' => 'Google Sheet name', 'admin_email' => 'Admin email', 'from_email' => 'From email', 'from_name' => 'From name',
                 'user_subject' => 'Subject листа вступнику', 'admin_subject' => 'Subject листа адміністратору', 'success_message' => 'Success message', 'slot_unavailable_message' => 'Slot unavailable message', 'blocked_message' => 'Blocked application message', 'generic_error_message' => 'Generic error message',
             );
             foreach ( $fields as $key => $label ) : ?>

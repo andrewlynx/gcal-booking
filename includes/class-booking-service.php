@@ -184,8 +184,8 @@ class UCU_Collegium_Booking_Service {
     public function run_integrations( int $booking_id ): void {
         $calendar = new UCU_Collegium_Google_Calendar_Service();
         $result   = $calendar->create_event_for_booking( $booking_id );
-        if ( empty( $result['calendar_event_id'] ) || ( UCU_Collegium_Settings::get( 'create_meet' ) && empty( $result['meet_link'] ) ) ) {
-            $this->update_status( $booking_id, 'failed_calendar', $result['error'] ?? 'Google Calendar/Meet не створено.' );
+        if ( empty( $result['calendar_event_id'] ) ) {
+            $this->update_status( $booking_id, 'failed_calendar', $result['error'] ?? 'Google Calendar не створено.' );
             return;
         }
 
